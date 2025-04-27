@@ -1,10 +1,13 @@
-"use client"; // if you're using App Router
+"use client";
 
-import { useState } from "react";
+import { useRef } from "react";
 
-export default function PDFDropzone() {
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [error, setError] = useState<string | null>(null);
+interface PDFDropzoneProps {
+  onFileSelect: (file: File) => void;
+}
+
+export default function PDFDropzone({ onFileSelect }: PDFDropzoneProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -12,17 +15,27 @@ export default function PDFDropzone() {
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setError(null);
-
     const file = e.dataTransfer.files[0];
+    validateAndSend(file);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
-      if (file.type === "application/pdf") {
-        setPdfFile(file);
-      } else {
-        setError("Only PDF files are allowed!");
-        setPdfFile(null);
-      }
+      validateAndSend(file);
     }
+  };
+
+  const validateAndSend = (file: File) => {
+    if (file.type === "application/pdf") {
+      onFileSelect(file);
+    } else {
+      alert("Only PDF files are allowed!");
+    }
+  };
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -30,16 +43,21 @@ export default function PDFDropzone() {
       <div
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className="w-96 h-48 border-2 border-dashed border-gray-400 flex items-center justify-center"
+        onClick={handleClick}
+        className="w-96 h-48 border-2 border-dashed border-gray-400 flex items-center justify-center cursor-pointer"
       >
-        {pdfFile ? (
-          <span className="text-green-600">{pdfFile.name}</span>
-        ) : (
-          <span className="text-gray-500">Drag & drop a PDF file here</span>
-        )}
+        <span className="text-gray-500">
+          Click or Drag & drop a PDF file here
+        </span>
       </div>
 
-      {error && <p className="text-red-500">{error}</p>}
+      <input
+        type="file"
+        accept="application/pdf"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
     </div>
   );
 }
